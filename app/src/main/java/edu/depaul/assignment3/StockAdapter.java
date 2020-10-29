@@ -13,7 +13,7 @@ import java.util.Locale;
 public class StockAdapter extends RecyclerView.Adapter<StockViewHolder> {
 
     private List<Stock> stockList;
-    private MainActivity mainAct;;
+    private MainActivity mainAct;
 
     public StockAdapter(List<Stock> stockList, MainActivity mainAct) {
         this.stockList = stockList;
@@ -25,7 +25,7 @@ public class StockAdapter extends RecyclerView.Adapter<StockViewHolder> {
     public StockViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.stock_list_entry, parent, false);
         itemView.setOnClickListener(mainAct);
-        itemView.setOnClickListener(mainAct);
+        itemView.setOnLongClickListener(mainAct);
         return new StockViewHolder(itemView);
     }
 

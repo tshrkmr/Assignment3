@@ -1,10 +1,13 @@
 package edu.depaul.assignment3;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -17,8 +20,11 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, View.OnLongClickListener, SwipeRefreshLayout.OnRefreshListener{
 
     private RecyclerView recyclerView;
+    private StockAdapter stockAdapter;
     private final List<Stock> stockList = new ArrayList<>();
     private SwipeRefreshLayout swipeRefreshLayout;
+    private static final String targetURL = "http://www.marketwatch.com/investing/stock/AAPL";
+    private int position;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,7 +36,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         recyclerView = findViewById(R.id.recycler);
-        StockAdapter stockAdapter = new StockAdapter(stockList, this);
+        stockAdapter = new StockAdapter(stockList, this);
         recyclerView.setAdapter(stockAdapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
@@ -58,11 +64,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onClick(View view) {
-
+        Intent i = new Intent(Intent.ACTION_VIEW);
+        i.setData(Uri.parse(targetURL));
+        startActivity(i);
     }
 
     @Override
     public boolean onLongClick(View view) {
+        position = recyclerView.getChildLayoutPosition(view);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Delete Stock Symbol " + "Place Holder" + "?");
+        builder.setPositiveButton("Yes", (dialogInterface, i) -> {
+            stockList.remove(position);
+            stockAdapter.notifyDataSetChanged();
+        });
+        builder.setNegativeButton("No", (dialogInterface, i) -> {
+        });
+        AlertDialog dialog = builder.create();
+        dialog.show();
         return false;
     }
 
