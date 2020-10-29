@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">Stock Watch</string>
     <string name="add_stock">Add Stock</string>
+    <string name="data_file">DataFile.json</string>
 </resources>

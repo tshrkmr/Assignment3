@@ -6,14 +6,24 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.JsonWriter;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,6 +35,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private SwipeRefreshLayout swipeRefreshLayout;
     private static final String targetURL = "http://www.marketwatch.com/investing/stock/AAPL";
     private int position;
+    private static final String TAG = "MainActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,5 +96,60 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return false;
     }
 
+    private void readJSONData() {
+
+        try {
+            FileInputStream fis = getApplicationContext().
+                    openFileInput(getString(R.string.data_file));
+
+            // Read string content from file
+            byte[] data = new byte[fis.available()]; // this technique is good for small files
+            int loaded = fis.read(data);
+            Log.d(TAG, "readJSONData: Loaded " + loaded + " bytes");
+            fis.close();
+            String json = new String(data);
+
+            // Create JSON Array from string file content
+            JSONArray stockArr = new JSONArray(json);
+            for (int i = 0; i < stockArr.length(); i++) {
+                JSONObject cObj = stockArr.getJSONObject(i);
+
+                String name = cObj.getString("name");
+                String symbol = cObj.getString("symbol");
+
+                // Create Stock and add to ArrayList
+                Stock s = new Stock(symbol, name, 10.0, 20.0, 100.0);
+                stockList.add(s);
+            }
+            stockAdapter.notifyDataSetChanged();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void writeJSONData() {
+
+        try {
+            FileOutputStream fos = getApplicationContext().
+                    openFileOutput(getString(R.string.data_file), Context.MODE_PRIVATE);
+
+            JsonWriter writer = new JsonWriter(new OutputStreamWriter(fos, StandardCharsets.UTF_8));
+            writer.setIndent("  ");
+            writer.beginArray();
+            for (Stock s : stockList) {
+                writer.beginObject();
+
+                writer.name("name").value(s.getCompanyName());
+                writer.name("symbol").value(s.getStockSymbol());
+                writer.endObject();
+            }
+            writer.endArray();
+            writer.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log.d(TAG, "writeJSONData: " + e.getMessage());
+        }
+    }
 
 }
