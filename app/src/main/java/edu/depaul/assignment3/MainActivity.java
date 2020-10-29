@@ -42,9 +42,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        for(int i = 0; i< 30; i++){
-            stockList.add(new Stock("St " + i+1, "Company " + i+1, i*20.0, i*0.5, i*0.01 ));
-        }
+//        for(int i = 0; i< 30; i++){
+//            stockList.add(new Stock("St " + i+1, "Company " + i+1, i*20.0, i*0.5, i*0.01 ));
+//        }
 
         recyclerView = findViewById(R.id.recycler);
         stockAdapter = new StockAdapter(stockList, this);
@@ -53,6 +53,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         swipeRefreshLayout = findViewById(R.id.swiper);
         swipeRefreshLayout.setOnRefreshListener(this);
+
+        readJSONData();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        writeJSONData();
     }
 
     @Override
@@ -114,13 +122,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             for (int i = 0; i < stockArr.length(); i++) {
                 JSONObject cObj = stockArr.getJSONObject(i);
 
+                // Access note data fields
                 String name = cObj.getString("name");
                 String symbol = cObj.getString("symbol");
-
+                //Log.d(TAG, "loadFile: " + name);
                 // Create Stock and add to ArrayList
                 Stock s = new Stock(symbol, name, 10.0, 20.0, 100.0);
                 stockList.add(s);
             }
+            Log.d(TAG, "readJSONData: " + stockList.toString());
+
             stockAdapter.notifyDataSetChanged();
 
         } catch (Exception e) {
@@ -146,6 +157,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
             writer.endArray();
             writer.close();
+            Log.d(TAG, "saveFile: " + stockList.toString());
         } catch (Exception e) {
             e.printStackTrace();
             Log.d(TAG, "writeJSONData: " + e.getMessage());

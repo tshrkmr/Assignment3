@@ -57,4 +57,9 @@ public class Stock implements Serializable, Comparable<Stock> {
     public int compareTo(Stock stock) {
         return companyName.compareTo(stock.getCompanyName());
     }
+
+    @Override
+    public String toString() {
+        return "\n" + stockSymbol + " | " + companyName + " | " + price + priceChange + " | " + changePercentage;
+    }
 }
