@@ -77,7 +77,6 @@ public class SymbolNameDownloader implements Runnable{
         }
     }
 
-
     public static ArrayList<String> findMatches(String str) {
         String strToMatch = str.toLowerCase().trim();
         HashSet<String> matchSet = new HashSet<>();

@@ -7,9 +7,9 @@ public class Stock implements Serializable, Comparable<Stock> {
 
     String stockSymbol;
     String companyName;
-    Double price;
-    Double priceChange;
-    Double changePercentage;
+    double price;
+    double priceChange;
+    double changePercentage;
 
     public Stock(String stockSymbol, String companyName, Double price, Double priceChange, Double changePercentage) {
         this.stockSymbol = stockSymbol;
@@ -46,6 +46,26 @@ public class Stock implements Serializable, Comparable<Stock> {
         Stock stock = (Stock) o;
         return stockSymbol.equals(stock.stockSymbol) &&
                 companyName.equals(stock.companyName);
+    }
+
+    public void setStockSymbol(String stockSymbol) {
+        this.stockSymbol = stockSymbol;
+    }
+
+    public void setCompanyName(String companyName) {
+        this.companyName = companyName;
+    }
+
+    public void setPrice(double price) {
+        this.price = price;
+    }
+
+    public void setPriceChange(double priceChange) {
+        this.priceChange = priceChange;
+    }
+
+    public void setChangePercentage(double changePercentage) {
+        this.changePercentage = changePercentage;
     }
 
     @Override

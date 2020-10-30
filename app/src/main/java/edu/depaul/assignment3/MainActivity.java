@@ -7,14 +7,18 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.InputType;
 import android.util.JsonWriter;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import org.json.JSONArray;
@@ -25,6 +29,7 @@ import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, View.OnLongClickListener, SwipeRefreshLayout.OnRefreshListener{
@@ -35,6 +40,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private SwipeRefreshLayout swipeRefreshLayout;
     private static final String targetURL = "http://www.marketwatch.com/investing/stock/AAPL";
     private int position;
+    private String choice;
     private static final String TAG = "MainActivity";
 
     @Override
@@ -54,6 +60,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         swipeRefreshLayout = findViewById(R.id.swiper);
         swipeRefreshLayout.setOnRefreshListener(this);
 
+        SymbolNameDownloader symbolNameDownloader = new SymbolNameDownloader();
+        new Thread(symbolNameDownloader).start();
+
         readJSONData();
     }
 
@@ -71,8 +80,115 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public boolean onOptionsItemSelected(MenuItem menuItem) {
+        if(menuItem.getItemId() == R.id.addStockMenu){
+            makeStockDialog();
+            return true;
+        }
         Toast.makeText(this, "Menu was selected", Toast.LENGTH_LONG).show();
         return super.onOptionsItemSelected(menuItem);
+    }
+
+    private void makeStockDialog(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        final EditText et = new EditText(this);
+        et.setInputType(InputType.TYPE_CLASS_TEXT);
+        et.setGravity(Gravity.CENTER_HORIZONTAL);
+        et.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS);
+
+        builder.setView(et);
+
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                choice = et.getText().toString().trim();
+
+                final ArrayList<String> results = SymbolNameDownloader.findMatches(choice);
+
+                if (results.size() == 0) {
+                    doNoAnswer(choice);
+                } else if (results.size() == 1) {
+                    doSelection(results.get(0));
+                } else {
+                    String[] array = results.toArray(new String[0]);
+
+                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                    builder.setTitle("Make a selection");
+                    builder.setItems(array, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            String symbol = results.get(which);
+                            doSelection(symbol);
+                        }
+                    });
+                    builder.setNegativeButton("Nevermind", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            // User cancelled the dialog
+                        }
+                    });
+                    AlertDialog dialog2 = builder.create();
+                    dialog2.show();
+                }
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                // User cancelled the dialog
+            }
+        });
+
+        builder.setMessage("Please enter a Symbol or Name:");
+        builder.setTitle("Stock Selection");
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    private void doNoAnswer(String symbol) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        builder.setMessage("Data for stock symbol");
+        builder.setTitle("Symbol Not Found: " + symbol);
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+
+    private void doSelection(String sym) {
+        String[] data = sym.split("-");
+        FinancialDataDownloader financialDataDownloader = new FinancialDataDownloader(this, data[0].trim());
+        new Thread(financialDataDownloader).start();
+    }
+
+    public void addStock(Stock stock){
+        if (stock == null) {
+            badDataAlert(choice);
+            return;
+        }
+        if (stockList.contains(stock)) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+            builder.setMessage("Stock Symbol " + stock.getCompanyName() + " is already displayed");
+            builder.setTitle("Duplicate Stock");
+            builder.setIcon(R.drawable.error);
+
+            AlertDialog dialog = builder.create();
+            dialog.show();
+            return;
+        }
+
+        stockList.add(stock);
+        Collections.sort(stockList);
+        stockAdapter.notifyDataSetChanged();
+    }
+
+    private void badDataAlert(String sym) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        builder.setMessage("No data for selection");
+        builder.setTitle("Symbol Not Found: " + sym);
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
     }
 
     @Override
@@ -163,5 +279,4 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Log.d(TAG, "writeJSONData: " + e.getMessage());
         }
     }
-
 }
