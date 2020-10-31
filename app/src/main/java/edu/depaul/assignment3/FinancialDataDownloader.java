@@ -2,12 +2,7 @@ package edu.depaul.assignment3;
 
 import android.net.Uri;
 import android.util.Log;
-
-import androidx.annotation.LongDef;
-
-import org.json.JSONArray;
 import org.json.JSONObject;
-
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -20,7 +15,7 @@ public class FinancialDataDownloader implements Runnable{
     private static final String FINANCIAL_DATA_URL_1 = "https://cloud.iexapis.com/stable/stock/";
     private static final String FINANCIAL_DATA_URL_2 = "/quote?token=pk_97328407750b4a79a12cd7b561bb0771";
     private MainActivity mainActivity;
-    private String searchTarget;
+    private String searchTarget, status;
 
     public FinancialDataDownloader(MainActivity mainActivity, String searchTarget) {
         this.mainActivity = mainActivity;
@@ -84,24 +79,23 @@ public class FinancialDataDownloader implements Runnable{
                 latestPrice= Double.parseDouble(lp);
 
             String ch = jObjMain.getString("change");
-            double change = 0.0;
+            double priceChange = 0.0;
             if (!ch.trim().isEmpty() && !ch.trim().equals(null))
-                change = Double.parseDouble(ch);
+                priceChange = Double.parseDouble(ch);
 
             String cp = jObjMain.getString("changePercent");
             double changePercent = 0.0;
             if (!cp.trim().isEmpty() && !cp.trim().equals(null))
                 changePercent = Double.parseDouble(cp);
 
-            final Stock stock = new Stock(symbol, name, latestPrice, change, changePercent);
+            final Stock stock = new Stock(symbol, name);
+            stock.setLatestPrice(latestPrice);
+            stock.setPriceChange(priceChange);
+            stock.setChangePercentage(changePercent);
+
             Log.d(TAG, "process: " + stock.toString());
 
-            mainActivity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    mainActivity.addStock(stock);
-                }
-            });
+            mainActivity.runOnUiThread(() -> mainActivity.addStock(stock));
 
         } catch (Exception e) {
             Log.d(TAG, "parseJSON: " + e.getMessage());

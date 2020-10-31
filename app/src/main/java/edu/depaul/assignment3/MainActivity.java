@@ -9,6 +9,8 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.InputType;
@@ -29,6 +31,7 @@ import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -37,21 +40,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private RecyclerView recyclerView;
     private StockAdapter stockAdapter;
     private final List<Stock> stockList = new ArrayList<>();
+    private final List<Stock> tmpStockList = new ArrayList<>();
     private SwipeRefreshLayout swipeRefreshLayout;
-    private static final String targetURL = "http://www.marketwatch.com/investing/stock/AAPL";
+    private static final String targetURL = "http://www.marketwatch.com/investing/stock/";
     private int position;
     private String choice;
     private static final String TAG = "MainActivity";
+    private boolean first = true;
+    private String newStock = "newStock";
+    private String updateStock = "updateStock";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
 //        for(int i = 0; i< 30; i++){
 //            stockList.add(new Stock("St " + i+1, "Company " + i+1, i*20.0, i*0.5, i*0.01 ));
 //        }
-
         recyclerView = findViewById(R.id.recycler);
         stockAdapter = new StockAdapter(stockList, this);
         recyclerView.setAdapter(stockAdapter);
@@ -59,17 +64,72 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         swipeRefreshLayout = findViewById(R.id.swiper);
         swipeRefreshLayout.setOnRefreshListener(this);
+        readJSONData();
+        connectionDecision();
+    }
 
+    private void connectionDecision(){
+        if(!checkNetworkConnection()){
+            noConnectionDialog("Updated");
+            for(Stock s: tmpStockList){
+                s.setLatestPrice(0.0);
+                s.setPriceChange(0.0);
+                s.setChangePercentage(0.0);
+                stockList.add(s);
+            }
+            Collections.sort(tmpStockList);
+            stockAdapter.notifyDataSetChanged();
+            return;
+        }
+        for(Stock s: tmpStockList) {
+            financialDataDownloader(s.getStockSymbol());
+        }
+    }
+
+    private void financialDataDownloader(String symbol){
+        FinancialDataDownloader financialDataDownloader = new FinancialDataDownloader(this, symbol);
+        new Thread(financialDataDownloader).start();
+    }
+
+    private void symbolNameDownload(){
         SymbolNameDownloader symbolNameDownloader = new SymbolNameDownloader();
         new Thread(symbolNameDownloader).start();
-
-        readJSONData();
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
-        writeJSONData();
+    public void onRefresh(){
+        if(!checkNetworkConnection()){
+            noConnectionDialog("Updated");
+            swipeRefreshLayout.setRefreshing(false);
+            return;
+        }
+        tmpStockList.clear();
+        readJSONData();
+        stockList.clear();
+        for(Stock s: tmpStockList){
+            financialDataDownloader(s.getStockSymbol());
+        }
+        tmpStockList.clear();
+        swipeRefreshLayout.setRefreshing(false);
+    }
+
+    private boolean checkNetworkConnection() {
+        ConnectivityManager cm =
+                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        if(netInfo != null && netInfo.isConnectedOrConnecting() && first){
+            symbolNameDownload();
+            first = false;
+        }
+        return netInfo != null && netInfo.isConnectedOrConnecting();
+    }
+
+    private void noConnectionDialog(String function){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("No Network Connection");
+        builder.setMessage("Stocks Cannot Be "+ function +" Without A Network Connection");
+        AlertDialog dialog = builder.create();
+        dialog.show();
     }
 
     @Override
@@ -84,11 +144,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             makeStockDialog();
             return true;
         }
-        Toast.makeText(this, "Menu was selected", Toast.LENGTH_LONG).show();
         return super.onOptionsItemSelected(menuItem);
     }
 
     private void makeStockDialog(){
+        if(!checkNetworkConnection()){
+            noConnectionDialog("Added");
+            return;
+        }
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
         final EditText et = new EditText(this);
@@ -98,35 +161,33 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         builder.setView(et);
 
-        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
-                choice = et.getText().toString().trim();
+        builder.setPositiveButton("OK", (dialog, id) -> {
+            choice = et.getText().toString().trim();
 
-                final ArrayList<String> results = SymbolNameDownloader.findMatches(choice);
+            final ArrayList<String> results = SymbolNameDownloader.findMatches(choice);
 
-                if (results.size() == 0) {
-                    doNoAnswer(choice);
-                } else if (results.size() == 1) {
-                    doSelection(results.get(0));
-                } else {
-                    String[] array = results.toArray(new String[0]);
+            if (results.size() == 0) {
+                doNoAnswer(choice);
+            } else if (results.size() == 1) {
+                doSelection(results.get(0));
+            } else {
+                String[] array = results.toArray(new String[0]);
 
-                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                    builder.setTitle("Make a selection");
-                    builder.setItems(array, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int which) {
-                            String symbol = results.get(which);
-                            doSelection(symbol);
-                        }
-                    });
-                    builder.setNegativeButton("Nevermind", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            // User cancelled the dialog
-                        }
-                    });
-                    AlertDialog dialog2 = builder.create();
-                    dialog2.show();
-                }
+                AlertDialog.Builder builder1 = new AlertDialog.Builder(MainActivity.this);
+                builder1.setTitle("Make a selection");
+                builder1.setItems(array, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        String symbol = results.get(which);
+                        doSelection(symbol);
+                    }
+                });
+                builder1.setNegativeButton("Nevermind", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        // User cancelled the dialog
+                    }
+                });
+                AlertDialog dialog2 = builder1.create();
+                dialog2.show();
             }
         });
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -178,6 +239,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         stockList.add(stock);
         Collections.sort(stockList);
+        writeJSONData();
         stockAdapter.notifyDataSetChanged();
     }
 
@@ -192,15 +254,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     @Override
-    public void onRefresh(){
-        Toast.makeText(this, "Page Refreshed", Toast.LENGTH_LONG).show();
-        swipeRefreshLayout.setRefreshing(false);
-    }
-
-    @Override
     public void onClick(View view) {
+        position = recyclerView.getChildLayoutPosition(view);
+        String sym = stockList.get(position).getStockSymbol();
         Intent i = new Intent(Intent.ACTION_VIEW);
-        i.setData(Uri.parse(targetURL));
+        i.setData(Uri.parse(targetURL+sym));
         startActivity(i);
     }
 
@@ -208,9 +266,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public boolean onLongClick(View view) {
         position = recyclerView.getChildLayoutPosition(view);
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Delete Stock Symbol " + "Place Holder" + "?");
+        builder.setTitle("Delete Stock Symbol " + stockList.get(position).getStockSymbol()+ "?");
         builder.setPositiveButton("Yes", (dialogInterface, i) -> {
             stockList.remove(position);
+            writeJSONData();
             stockAdapter.notifyDataSetChanged();
         });
         builder.setNegativeButton("No", (dialogInterface, i) -> {
@@ -221,7 +280,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void readJSONData() {
-
         try {
             FileInputStream fis = getApplicationContext().
                     openFileInput(getString(R.string.data_file));
@@ -243,10 +301,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 String symbol = cObj.getString("symbol");
                 //Log.d(TAG, "loadFile: " + name);
                 // Create Stock and add to ArrayList
-                Stock s = new Stock(symbol, name, 10.0, 20.0, 100.0);
-                stockList.add(s);
+                Stock s = new Stock(symbol, name);
+                tmpStockList.add(s);
             }
-            Log.d(TAG, "readJSONData: " + stockList.toString());
+            Log.d(TAG, "readJSONData: " + tmpStockList.toString());
 
             stockAdapter.notifyDataSetChanged();
 
@@ -256,7 +314,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void writeJSONData() {
-
         try {
             FileOutputStream fos = getApplicationContext().
                     openFileOutput(getString(R.string.data_file), Context.MODE_PRIVATE);
