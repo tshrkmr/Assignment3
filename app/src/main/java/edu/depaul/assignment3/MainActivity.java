@@ -47,8 +47,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private String choice;
     private static final String TAG = "MainActivity";
     private boolean first = true;
-    private String newStock = "newStock";
-    private String updateStock = "updateStock";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

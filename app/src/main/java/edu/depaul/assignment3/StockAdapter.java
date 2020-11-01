@@ -1,5 +1,6 @@
 package edu.depaul.assignment3;
 
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -32,11 +33,26 @@ public class StockAdapter extends RecyclerView.Adapter<StockViewHolder> {
     @Override
     public void onBindViewHolder(@NonNull StockViewHolder holder, int position) {
         Stock s = stockList.get(position);
+        int color;
+        String pointer;
+        if(s.getPriceChange()>0) {
+            color = Color.GREEN;
+            pointer = "\u25B2";
+        } else {
+            color = Color.RED;
+            pointer = "\u25BC";
+        }
+        holder.stockSymbol.setTextColor(color);
+        holder.companyName.setTextColor(color);
+        holder.stockPrice.setTextColor(color);
+        holder.changeSymbol.setTextColor(color);
+        holder.changeValue.setTextColor(color);
+
         holder.stockSymbol.setText(s.getStockSymbol());
         holder.companyName.setText(s.getCompanyName());
         holder.stockPrice.setText(String.format(Locale.getDefault(),"%.2f",s.getLatestPrice()));
-        holder.changeSymbol.setText(s.getStockSymbol());
-        holder.changeValue.setText(String.format(Locale.getDefault(),"%.2f" +"(" + "%.2f"+")",s.getPriceChange(), s.getChangePercentage()));
+        holder.changeSymbol.setText(pointer);
+        holder.changeValue.setText(String.format(Locale.getDefault(),"%.2f" +"(" + "%.2f"+ "%%)",s.getPriceChange(), s.getChangePercentage()));
     }
 
     @Override
