@@ -45,14 +45,6 @@ public class Stock implements Serializable, Comparable<Stock> {
                 companyName.equals(stock.companyName);
     }
 
-    public void setStockSymbol(String stockSymbol) {
-        this.stockSymbol = stockSymbol;
-    }
-
-    public void setCompanyName(String companyName) {
-        this.companyName = companyName;
-    }
-
     public void setLatestPrice(double latestPrice) {
         this.latestPrice = latestPrice;
     }

@@ -14,8 +14,8 @@ public class FinancialDataDownloader implements Runnable{
     private static final String TAG = "FinancialDataDownloader";
     private static final String FINANCIAL_DATA_URL_1 = "https://cloud.iexapis.com/stable/stock/";
     private static final String FINANCIAL_DATA_URL_2 = "/quote?token=pk_97328407750b4a79a12cd7b561bb0771";
-    private MainActivity mainActivity;
-    private String searchTarget, status;
+    private final MainActivity mainActivity;
+    private final String searchTarget;
 
     public FinancialDataDownloader(MainActivity mainActivity, String searchTarget) {
         this.mainActivity = mainActivity;

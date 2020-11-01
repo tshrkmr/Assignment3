@@ -13,8 +13,8 @@ import java.util.Locale;
 
 public class StockAdapter extends RecyclerView.Adapter<StockViewHolder> {
 
-    private List<Stock> stockList;
-    private MainActivity mainAct;
+    private final List<Stock> stockList;
+    private final MainActivity mainAct;
 
     public StockAdapter(List<Stock> stockList, MainActivity mainAct) {
         this.stockList = stockList;

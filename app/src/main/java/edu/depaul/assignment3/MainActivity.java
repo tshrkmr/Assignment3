@@ -47,6 +47,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private String choice;
     private static final String TAG = "MainActivity";
     private boolean first = true;
+    private final String noData = "noData";
+    private final String noStock = "noStock";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,19 +81,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             stockAdapter.notifyDataSetChanged();
             return;
         }
-        for(Stock s: tmpStockList) {
-            financialDataDownloader(s.getStockSymbol());
-        }
-    }
-
-    private void financialDataDownloader(String symbol){
-        FinancialDataDownloader financialDataDownloader = new FinancialDataDownloader(this, symbol);
-        new Thread(financialDataDownloader).start();
-    }
-
-    private void symbolNameDownload(){
-        SymbolNameDownloader symbolNameDownloader = new SymbolNameDownloader();
-        new Thread(symbolNameDownloader).start();
+        financialDataDownloader(tmpStockList);
     }
 
     @Override
@@ -104,9 +94,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         tmpStockList.clear();
         readJSONData();
         stockList.clear();
-        for(Stock s: tmpStockList){
-            financialDataDownloader(s.getStockSymbol());
-        }
+        financialDataDownloader(tmpStockList);
         tmpStockList.clear();
         swipeRefreshLayout.setRefreshing(false);
     }
@@ -122,12 +110,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return netInfo != null && netInfo.isConnectedOrConnecting();
     }
 
-    private void noConnectionDialog(String function){
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("No Network Connection");
-        builder.setMessage("Stocks Cannot Be "+ function +" Without A Network Connection");
-        AlertDialog dialog = builder.create();
-        dialog.show();
+    private void financialDataDownloader(List<Stock> list){
+        for(Stock s: list) {
+            FinancialDataDownloader financialDataDownloader = new FinancialDataDownloader(this, s.getStockSymbol());
+            new Thread(financialDataDownloader).start();
+        }
+    }
+
+    private void symbolNameDownload(){
+        SymbolNameDownloader symbolNameDownloader = new SymbolNameDownloader();
+        new Thread(symbolNameDownloader).start();
     }
 
     @Override
@@ -165,7 +157,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             final ArrayList<String> results = SymbolNameDownloader.findMatches(choice);
 
             if (results.size() == 0) {
-                doNoAnswer(choice);
+                doNoAnswer(choice, noStock);
             } else if (results.size() == 1) {
                 doSelection(results.get(0));
             } else {
@@ -201,16 +193,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         dialog.show();
     }
 
-    private void doNoAnswer(String symbol) {
+    private void doNoAnswer(String symbol, String message) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
-        builder.setMessage("Data for stock symbol");
         builder.setTitle("Symbol Not Found: " + symbol);
+        if(message.equals(noStock)){
+            builder.setMessage("Data for stock symbol");
+        }else if(message.equals(noData)){
+            builder.setMessage("No data for selection");
+        }
 
         AlertDialog dialog = builder.create();
         dialog.show();
     }
-
 
     private void doSelection(String sym) {
         String[] data = sym.split("-");
@@ -220,7 +215,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public void addStock(Stock stock){
         if (stock == null) {
-            badDataAlert(choice);
+            //badDataAlert(choice);
+            doNoAnswer(choice, noData);
             return;
         }
         if (stockList.contains(stock)) {
@@ -241,12 +237,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         stockAdapter.notifyDataSetChanged();
     }
 
-    private void badDataAlert(String sym) {
+    private void noConnectionDialog(String function){
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-
-        builder.setMessage("No data for selection");
-        builder.setTitle("Symbol Not Found: " + sym);
-
+        builder.setTitle("No Network Connection");
+        builder.setMessage("Stocks Cannot Be "+ function +" Without A Network Connection");
         AlertDialog dialog = builder.create();
         dialog.show();
     }
@@ -298,7 +292,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 String name = cObj.getString("name");
                 String symbol = cObj.getString("symbol");
                 //Log.d(TAG, "loadFile: " + name);
-                // Create Stock and add to ArrayList
+                // Create Stock and add to temporary ArrayList
                 Stock s = new Stock(symbol, name);
                 tmpStockList.add(s);
             }
