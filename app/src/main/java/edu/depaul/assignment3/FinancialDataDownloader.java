@@ -25,7 +25,6 @@ public class FinancialDataDownloader implements Runnable{
     @Override
     public void run() {
         Uri.Builder uriBuilder = Uri.parse(FINANCIAL_DATA_URL_1 + searchTarget + FINANCIAL_DATA_URL_2).buildUpon();
-        //uriBuilder.appendQueryParameter("fullText", "true");
         String urlToUse = uriBuilder.toString();
 
         Log.d(TAG, "run: " + urlToUse);
@@ -64,9 +63,6 @@ public class FinancialDataDownloader implements Runnable{
 
     private void process(String s) {
         try {
-            //JSONArray jArray = new JSONArray(s);
-            //JSONObject jCountry = (JSONObject) jArray.get(0);
-
             JSONObject jObjMain = new JSONObject(s);
 
             String symbol = jObjMain.getString("symbol");

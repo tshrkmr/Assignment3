@@ -69,6 +69,6 @@ public class Stock implements Serializable, Comparable<Stock> {
 
     @Override
     public String toString() {
-        return "\n" + stockSymbol + " | " + companyName + " | " + latestPrice + priceChange + " | " + changePercentage;
+        return "\n" + stockSymbol + " | " + companyName + " | " + latestPrice + " | " + priceChange + " | " + changePercentage;
     }
 }

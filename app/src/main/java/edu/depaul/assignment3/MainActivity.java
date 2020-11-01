@@ -165,25 +165,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 AlertDialog.Builder builder1 = new AlertDialog.Builder(MainActivity.this);
                 builder1.setTitle("Make a selection");
-                builder1.setItems(array, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        String symbol = results.get(which);
-                        doSelection(symbol);
-                    }
+                builder1.setItems(array, (dialog1, which) -> {
+                    String symbol = results.get(which);
+                    doSelection(symbol);
                 });
-                builder1.setNegativeButton("Nevermind", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        // User cancelled the dialog
-                    }
+                builder1.setNegativeButton("Nevermind", (dialog1, id1) -> {
+                    // User cancelled the dialog
                 });
                 AlertDialog dialog2 = builder1.create();
                 dialog2.show();
             }
         });
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
-                // User cancelled the dialog
-            }
+        builder.setNegativeButton("Cancel", (dialog, id) -> {
+            // User cancelled the dialog
         });
 
         builder.setMessage("Please enter a Symbol or Name:");
@@ -215,7 +209,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public void addStock(Stock stock){
         if (stock == null) {
-            //badDataAlert(choice);
             doNoAnswer(choice, noData);
             return;
         }
@@ -230,7 +223,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             dialog.show();
             return;
         }
-
         stockList.add(stock);
         Collections.sort(stockList);
         writeJSONData();

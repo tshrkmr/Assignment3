@@ -35,7 +35,7 @@ public class StockAdapter extends RecyclerView.Adapter<StockViewHolder> {
         Stock s = stockList.get(position);
         int color;
         String pointer;
-        if(s.getPriceChange()>0) {
+        if(s.getPriceChange()>=0) {
             color = Color.GREEN;
             pointer = "\u25B2";
         } else {
