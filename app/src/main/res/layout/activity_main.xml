@@ -21,7 +21,8 @@
         app:layout_constraintHorizontal_bias="0.52"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toTopOf="parent"
+        tools:ignore="ExtraText">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler"
@@ -35,6 +36,10 @@
             android:layout_marginBottom="16dp"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            android:scrollbars="vertical"
+            android:scrollbarThumbVertical="@android:color/white"
+            android:scrollbarSize="5dp"/>
+            <!-- android:fadeScrollbars="false"-->
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -14,6 +14,7 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.InputType;
+import android.text.method.ScrollingMovementMethod;
 import android.util.JsonWriter;
 import android.util.Log;
 import android.view.Gravity;
@@ -49,6 +50,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private boolean first = true;
     private final String noData = "noData";
     private final String noStock = "noStock";
+    private final String updatedStock = "Updated";
+    private final String addedStock = "Added";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,7 +73,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void connectionDecision(){
         if(!checkNetworkConnection()){
-            noConnectionDialog("Updated");
+            noConnectionDialog(updatedStock);
             for(Stock s: tmpStockList){
                 s.setLatestPrice(0.0);
                 s.setPriceChange(0.0);
@@ -87,7 +90,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onRefresh(){
         if(!checkNetworkConnection()){
-            noConnectionDialog("Updated");
+            noConnectionDialog(updatedStock);
             swipeRefreshLayout.setRefreshing(false);
             return;
         }
@@ -139,7 +142,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void makeStockDialog(){
         if(!checkNetworkConnection()){
-            noConnectionDialog("Added");
+            noConnectionDialog(addedStock);
             return;
         }
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -215,7 +218,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (stockList.contains(stock)) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
-            builder.setMessage("Stock Symbol " + stock.getCompanyName() + " is already displayed");
+            builder.setMessage("Stock Symbol " + stock.getStockSymbol() + " is already displayed");
             builder.setTitle("Duplicate Stock");
             builder.setIcon(R.drawable.error);
 
@@ -250,6 +253,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public boolean onLongClick(View view) {
         position = recyclerView.getChildLayoutPosition(view);
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setIcon(R.drawable.delete);
         builder.setTitle("Delete Stock Symbol " + stockList.get(position).getStockSymbol()+ "?");
         builder.setPositiveButton("Yes", (dialogInterface, i) -> {
             stockList.remove(position);
