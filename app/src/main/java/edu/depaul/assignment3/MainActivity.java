@@ -14,6 +14,7 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.InputType;
+import android.text.method.ScrollingMovementMethod;
 import android.util.JsonWriter;
 import android.util.Log;
 import android.view.Gravity;
